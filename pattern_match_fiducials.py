@@ -10,6 +10,7 @@ import copy
 parser = argparse.ArgumentParser()
 parser.add_argument('--imageFilepath', help="The filepath to the input image. Default: './images/BBB.png'", default='./images/BBB.png')
 parser.add_argument('--outputDirectory', help="The output directory. Default: './outputs/'", default='./outputs/')
+parser.add_argument('--displayIntermediaryImages', help="Pause execution to display the intermediary images", action='store_true')
 parser.add_argument('--fiducialInnerDiameterInPixels', help="The diameter of the fiducials' inner bright disk. Default: 26", type=int, default=26)
 parser.add_argument('--fiducialOuterDiameterInPixels', help="The diameter of the fiducials' outer dark disk. Default: 68", type=int, default=68)
 parser.add_argument('--numberOfFiducials', help="The number of fiducials. Default: 3", type=int, default=3)
@@ -26,6 +27,10 @@ def main():
     # Load the input image
     original_img = cv2.imread(args.imageFilepath)
     img_shapeHWC = original_img.shape
+
+    # Create the output directory
+    if not os.path.exists(args.outputDirectory):
+        os.makedirs(args.outputDirectory)
 
     # Convert to grayscale
     grayscale_img = cv2.cvtColor(original_img, cv2.COLOR_BGR2GRAY)
@@ -49,6 +54,10 @@ def main():
     padded_match_8bits_img = np.zeros((img_shapeHWC[0], img_shapeHWC[1]), dtype=np.uint8)
     padded_match_8bits_img[fiducial_pattern.shape[0]//2: fiducial_pattern.shape[0]//2 + match_img.shape[0],
         fiducial_pattern.shape[1]//2: fiducial_pattern.shape[1]//2 + match_img.shape[1]] = (128 * (match_img + 1.0)).astype(np.uint8)
+    if args.displayIntermediaryImages:
+        cv2.namedWindow("Padded match image")
+        cv2.imshow("Padded match image", padded_match_8bits_img)
+        cv2.waitKey(0)
 
     # Find the optimal threshold to detect the expected number of fiducials
     blob_detector = blob_analysis.BinaryBlobDetector()
@@ -108,7 +117,10 @@ def main():
     cv2.line(annotated_img, corner_to_pixels['NorthEast'], corner_to_pixels['SouthEast'], (255, 0, 0), thickness=3)
     cv2.line(annotated_img, corner_to_pixels['SouthEast'], corner_to_pixels['SouthWest'], (255, 0, 0), thickness=3)
     cv2.line(annotated_img, corner_to_pixels['SouthWest'], corner_to_pixels['NorthWest'], (255, 0, 0), thickness=3)
-
+    if args.displayIntermediaryImages:
+        cv2.namedWindow("Annotated image")
+        cv2.imshow("Annotated image",annotated_img)
+        cv2.waitKey(0)
 
     # Save intermediary images
     cv2.imwrite(os.path.join(args.outputDirectory, "grayscale.png"), grayscale_img)
