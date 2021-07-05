@@ -14,8 +14,6 @@ parser.add_argument('--displayIntermediaryImages', help="Pause execution to disp
 parser.add_argument('--fiducialInnerDiameterInPixels', help="The diameter of the fiducials' inner bright disk. Default: 26", type=int, default=26)
 parser.add_argument('--fiducialOuterDiameterInPixels', help="The diameter of the fiducials' outer dark disk. Default: 68", type=int, default=68)
 parser.add_argument('--numberOfFiducials', help="The number of fiducials. Default: 3", type=int, default=3)
-parser.add_argument('--matchThresholdUpperLimit', help="The match threshold upper limit. Default: 255", type=int, default=255)
-parser.add_argument('--matchThresholdLowerLimit', help="The match threshold lower limit. Default: 180", type=int, default=180)
 args = parser.parse_args()
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)-15s %(levelname)s \t%(message)s')
@@ -45,11 +43,11 @@ def main():
                args.fiducialOuterDiameterInPixels//2, 70, cv2.FILLED)  # The outer disk is dark gray
     cv2.circle(fiducial_pattern, (pattern_sizeHW[1]//2, pattern_sizeHW[0]//2),
                args.fiducialInnerDiameterInPixels//2, 255, cv2.FILLED)  # The inner disk is white
-    # Normalize the pattern image
-    normalized_fiducial_pattern = (fiducial_pattern.astype(np.float32) - fiducial_pattern.mean())/fiducial_pattern.std()
+    # Standardize the pattern image
+    standardized_fiducial_pattern = (fiducial_pattern.astype(np.float32) - fiducial_pattern.mean())/fiducial_pattern.std()
 
     # Pattern match
-    match_img = cv2.matchTemplate(grayscale_img.astype(np.float32), normalized_fiducial_pattern, cv2.TM_CCOEFF_NORMED)
+    match_img = cv2.matchTemplate(grayscale_img.astype(np.float32), standardized_fiducial_pattern, cv2.TM_CCOEFF_NORMED)
     # Create an 8-bit version of the match image for visualization, padded with zeros to get an image the same size as the original
     padded_match_8bits_img = np.zeros((img_shapeHWC[0], img_shapeHWC[1]), dtype=np.uint8)
     padded_match_8bits_img[fiducial_pattern.shape[0]//2: fiducial_pattern.shape[0]//2 + match_img.shape[0],
