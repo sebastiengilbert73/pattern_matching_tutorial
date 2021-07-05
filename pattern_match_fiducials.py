@@ -130,6 +130,5 @@ def main():
     cv2.imwrite(os.path.join(args.outputDirectory, "foundFiducials.png"), annotated_img)
 
 
-
 if __name__ == '__main__':
     main()
